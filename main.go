@@ -40,6 +40,7 @@ func (*handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	}
 	// fmt.Println(msg)
 	w.WriteMsg(&msg)
+	//Teste
 }
 
 func QueryIP(url string) string {
