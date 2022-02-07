@@ -1,4 +1,4 @@
-module dnsf
+module github.com/mat-penna/GoDNSFilter
 
 go 1.17
 

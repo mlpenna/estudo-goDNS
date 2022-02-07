@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mat-penna/GoDNSFilter/dns_logger"
+
 	"github.com/miekg/dns"
 )
 
@@ -20,7 +22,6 @@ type handler struct{}
 func (*handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	msg := dns.Msg{}
 	msg.SetReply(r)
-	QueryIP(msg.Question[0].Name)
 	switch r.Question[0].Qtype {
 	case dns.TypeA:
 		msg.Authoritative = true
@@ -40,6 +41,12 @@ func (*handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	}
 	// fmt.Println(msg)
 	w.WriteMsg(&msg)
+	var e dns_logger.DNSQueryEntry
+	e.SrcHost = w.RemoteAddr()
+	e.TimeDate = time.Now().String()
+	e.UrlQuery = msg.Question[0].Name
+
+	dns_logger.PrintQuery(e)
 	//Teste
 }
 
