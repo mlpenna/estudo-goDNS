@@ -13,6 +13,10 @@ import (
 	"github.com/miekg/dns"
 )
 
+const (
+	LocalPort int = 553
+)
+
 var domainsToBlock map[string]string = map[string]string{
 	"google.com.":   "1.2.3.4",
 	"facebook.com.": "1.2.3.4",
@@ -48,7 +52,7 @@ func (*handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	e.UrlQuery = msg.Question[0].Name
 
 	dns_logger.PrintQuery(e)
-	//Teste
+	//Teste2
 }
 
 func QueryIP(url string) string {
@@ -74,10 +78,9 @@ func QueryIP(url string) string {
 
 func main() {
 	fmt.Println("Iniciando Servidor DNS...")
-	srv := &dns.Server{Addr: ":" + strconv.Itoa(533), Net: "udp"}
+	srv := &dns.Server{Addr: ":" + strconv.Itoa(LocalPort), Net: "udp"}
 	srv.Handler = &handler{}
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("Failed to set udp listener %s\n", err.Error())
 	}
-
 }
