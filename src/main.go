@@ -1,28 +1,24 @@
 package main
 
+//dig @127.0.0.1 -p 533 google.com
+
 import (
-	"context"
 	"fmt"
 	"log"
 	"net"
-	"strconv"
 	"time"
 
-	"github.com/mat-penna/GoDNSFilter/dns_logger"
+	"github.com/mat-penna/GoDNSFilter/data"
+	"github.com/mat-penna/GoDNSFilter/logger"
+	"github.com/mat-penna/GoDNSFilter/util"
 
 	"github.com/miekg/dns"
 )
 
-const (
-	LocalPort int = 553
-)
-
-var domainsToBlock map[string]string = map[string]string{
-	"google.com.":   "1.2.3.4",
-	"facebook.com.": "1.2.3.4",
-}
-
 type handler struct{}
+
+var IPad string
+var domain string
 
 func (*handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	msg := dns.Msg{}
@@ -30,56 +26,42 @@ func (*handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	switch r.Question[0].Qtype {
 	case dns.TypeA:
 		msg.Authoritative = true
-		domain := msg.Question[0].Name
-		address, ok := domainsToBlock[domain]
-		if ok {
+		domain = msg.Question[0].Name
+		block := data.IsInBlockList(domain)
+		if block {
+			IPad = data.SinkholeAddr
 			msg.Answer = append(msg.Answer, &dns.A{
 				Hdr: dns.RR_Header{Name: domain, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 60},
-				A:   net.ParseIP(QueryIP(address)),
+				A:   net.ParseIP(IPad),
 			})
 		} else {
+			IPad = util.QueryIPfromURL(domain)
 			msg.Answer = append(msg.Answer, &dns.A{
 				Hdr: dns.RR_Header{Name: domain, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 60},
-				A:   net.ParseIP(QueryIP(msg.Question[0].Name)),
+				A:   net.ParseIP(IPad),
 			})
 		}
 	}
-	// fmt.Println(msg)
 	w.WriteMsg(&msg)
-	var e dns_logger.DNSQueryEntry
+
+	var e logger.DNSQueryEntry
 	e.SrcHost = w.RemoteAddr()
 	e.TimeDate = time.Now().String()
-	e.UrlQuery = msg.Question[0].Name
+	e.UrlQuery = IPad
+	e.Domain = domain
 
-	dns_logger.PrintQuery(e)
-	//Teste2
-}
-
-func QueryIP(url string) string {
-	r := &net.Resolver{
-		PreferGo: true,
-		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-			d := net.Dialer{
-				Timeout: time.Millisecond * time.Duration(10000),
-			}
-			return d.DialContext(ctx, network, "1.1.1.1:53")
-		},
-	}
-	ip, _ := r.LookupHost(context.Background(), url)
-
-	// print(ip[0])
-	if len(ip) == 0 {
-		return "1.2.3.4"
-	} else {
-		return ip[0]
-	}
-
+	logger.PrintQuery(e)
 }
 
 func main() {
+
+	// data.AddDomainToBlock("google.com.")
+	data.AddDomainToBlock("facebook.com.")
+
 	fmt.Println("Iniciando Servidor DNS...")
-	srv := &dns.Server{Addr: ":" + strconv.Itoa(LocalPort), Net: "udp"}
+	srv := &dns.Server{Addr: ":" + data.LocalPort, Net: "udp"}
 	srv.Handler = &handler{}
+
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("Failed to set udp listener %s\n", err.Error())
 	}
