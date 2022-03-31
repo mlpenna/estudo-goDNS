@@ -11,10 +11,10 @@ O servidor é capaz de atuar como servidor DNS em uma rede local (é necessário
 algumas URLs setadas manualmente dentro do código. Caso ela não seja uma URL a ser bloqueada, o DNS repassa a query a um de dois DNS públicos (google ou cloudflare)
 e retorna a resposta ao cliente que fez a query original.
 
-É necessário investigar e implementar uma forma mais eficiente e acurada para fazer a comparação entre a as strings da URL recebida na query pelo cliente e as
+É necessário investigar e implementar uma forma mais eficiente e acurada para fazer a comparação entre a strings da URL recebida na query pelo cliente e as
 contidas na lista de URL a serem bloqueadas.
 
-Uma forma melhor de implementar esta lógica de bloqueio talvez seja usando uma API de clasificação de URL disponível no mercado (há algumas).
+Uma forma melhor de implementar esta lógica de bloqueio talvez seja usando uma API de clasificação de URL disponível no mercado (há algumas), e realizar a decisão com base no retorno dessa API.
 
 
 
